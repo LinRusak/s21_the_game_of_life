@@ -6,6 +6,7 @@
 
 #define N 25
 #define M 80
+#define DEFAULT_CONFIG "config1.txt"
 
 int positive_mod(int divisor, int denominator);
 int check_adjasents(char *matrix, int n, int m, int i, int j);
@@ -14,11 +15,18 @@ int draw_and_update(char *field, int n, int m, int count);
 
 int input(char *field, int n, int m, int *count_ptr);
 
-int main(void) {
+int main(int argc, char **argv) {
     int exit_status = EXIT_SUCCESS;
 
     FILE *config;
-    if ((config = freopen("config1.txt", "r", stdin)) != NULL) {
+    if (argc <= 1) {
+        printf("Configuration file is not passed.\nTaking a default configuration...\n");
+        config = freopen(DEFAULT_CONFIG, "r", stdin);
+    } else {
+        printf("Configuration file '%s' is passed.\n", argv[1]);
+        config = freopen(argv[1], "r", stdin);
+    }
+    if (config != NULL) {
         char field[N][M];  // 0 - dead, 1 - alive
         int n = N, m = M;
 
@@ -30,7 +38,7 @@ int main(void) {
         }
         fclose(config);
     } else {
-        perror("An error has occured: ");
+        perror("An error has occured");
         exit_status = EXIT_FAILURE;
     }
 
