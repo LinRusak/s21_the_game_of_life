@@ -11,10 +11,12 @@
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
 
-int draw_and_update(char **field, int n, int m, int count);
+int update(char **field, int n, int m, int *count);
 int input(char **field, int n, int m, int *count_ptr);
 
 char **allocate_matrix(int n, int m);
+
+void init_window();
 
 int main(int argc, char **argv) {
     int exit_status = EXIT_SUCCESS;
@@ -33,11 +35,13 @@ int main(int argc, char **argv) {
     if (config != NULL && field != NULL) {
         int count = 0;
         if (input(field, n, m, &count) == EXIT_SUCCESS) {
+            init_window();
             while (count >= 0 && exit_status == EXIT_SUCCESS) {
-                count = draw_and_update(field, n, m, count);
-                if (count == -1) exit_status = EXIT_FAILURE;
+                if (update(field, n, m, &count) == EXIT_FAILURE) exit_status = EXIT_FAILURE;
             }
+            endwin();
         }
+
         free(field);
         fclose(config);
     } else {
@@ -49,6 +53,16 @@ int main(int argc, char **argv) {
     if (exit_status != EXIT_SUCCESS) perror("An error has occured");
 
     return exit_status;
+}
+
+void init_window() {
+    WINDOW *stdscr;
+    stdscr = initscr();
+    cbreak();
+    noecho();
+    // nodelay(stdscr, TRUE);
+    intrflush(stdscr, FALSE);
+    keypad(stdscr, TRUE);
 }
 
 // Matrix allocation
@@ -78,9 +92,9 @@ int check_adjasents(char **matrix, int n, int m, int i, int j) {
 // Input output section
 
 void print_horizontal_border(int w) {
-    printf("+");
-    for (int i = 0; i < w; i++) printf("-");
-    printf("+\n");
+    printw("+");
+    for (int i = 0; i < w; i++) printw("-");
+    printw("+\n");
 }
 
 int input(char **field, int n, int m, int *count) {
@@ -96,33 +110,39 @@ int input(char **field, int n, int m, int *count) {
     return exit_status;
 }
 
-int draw_and_update(char **field, int n, int m, int count) {
+void draw(char **field, int n, int m, int *count, char **next_field) {
+    clear();
+    print_horizontal_border(m);
+    for (int i = 0; i < n; i++) {
+        printw("|");
+        for (int j = 0; j < m; j++) {
+            printw("%c", field[i][j] ? 'o' : ' ');
+            int neighbours = check_adjasents(field, n, m, i, j);
+            if (neighbours == 3 || (field[i][j] && neighbours == 2))
+                next_field[i][j] = 1;
+            else
+                next_field[i][j] = 0;
+
+            if (field[i][j] && !next_field[i][j])
+                count--;
+            else if (!field[i][j] && next_field[i][j])
+                count++;
+        }
+        printw("|\n");
+    }
+    print_horizontal_border(m);
+    refresh();
+}
+
+int update(char **field, int n, int m, int *count) {
+    int exit_status = EXIT_SUCCESS;
     char **next_field = allocate_matrix(n, m);
     if (next_field != NULL) {
-        printf("\033c");
-        print_horizontal_border(m);
-        for (int i = 0; i < n; i++) {
-            printf("|");
-            for (int j = 0; j < m; j++) {
-                printf("%c", field[i][j] ? 'o' : ' ');
-                int neighbours = check_adjasents(field, n, m, i, j);
-                if (neighbours == 3 || (field[i][j] && neighbours == 2))
-                    next_field[i][j] = 1;
-                else
-                    next_field[i][j] = 0;
-
-                if (field[i][j] && !next_field[i][j])
-                    count--;
-                else if (!field[i][j] && next_field[i][j])
-                    count++;
-            }
-            puts("|");
-        }
-        print_horizontal_border(m);
+        draw(field, n, m, count, next_field);
         memcpy(field + n, next_field + n, n * m * sizeof(char));
         usleep(500000);
         free(next_field);
     } else
-        count = -1;
-    return count;
+        exit_status = EXIT_FAILURE;
+    return exit_status;
 }
