@@ -11,7 +11,7 @@ int check_adjasents(char *matrix, int n, int m, int i, int j) {
     int counter = 0;
     for (int di = -1; di <= 1; di++) {
         for (int dj = -1; dj <= 1; dj++) {
-            if (di == dj) continue;
+            if (di == 0 && dj == 0) continue;
             if (matrix[pos_mod(i + di, n) * m + pos_mod(j + dj, m)]) counter++;
         }
     }
@@ -41,9 +41,8 @@ int main(void) {
         for (int i = 0; i < n; i++) {
             printf("|");
             for (int j = 0; j < m; j++) {
-                // printf("%c", field[i][j] ? 'o' : ' ');
+                printf("%c", field[i][j] ? 'o' : ' ');
                 int neighbours = check_adjasents((char *)field, n, m, i, j);
-                printf("%d", neighbours);
                 if (field[i][j] && neighbours >= 2 && neighbours <= 3)
                     next_field[i][j] = 1;
                 else if (!field[i][j] && neighbours == 3)
