@@ -76,6 +76,7 @@ int input(char *field, int n, int m, int *count) {
 
 int draw_and_update(char *field, int n, int m, int count) {
     char next_field[N][M] = {0};
+    printf("\033c");
     print_horizontal_border(m);
     for (int i = 0; i < n; i++) {
         printf("|");
