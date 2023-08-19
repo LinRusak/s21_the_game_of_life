@@ -11,8 +11,8 @@
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
 
-int update(char **field, int n, int m, int *count);
-int input(char **field, int n, int m, int *count_ptr);
+int update(char **field, int n, int m, int *count, int *delay);
+int input(FILE *src, char **field, int n, int m, int *count_ptr);
 
 char **allocate_matrix(int n, int m);
 
@@ -24,26 +24,28 @@ int main(int argc, char **argv) {
     FILE *config;
     if (argc <= 1) {
         printf("Configuration file is not passed.\nTaking a default configuration...\n");
-        config = freopen(DEFAULT_CONFIG, "r", stdin);
+        config = fopen(DEFAULT_CONFIG, "r");
     } else {
         printf("Configuration file '%s' is passed.\n", argv[1]);
-        config = freopen(argv[1], "r", stdin);
+        config = fopen(argv[1], "r");
     }
 
     int n = N, m = M;
     char **field = allocate_matrix(n, m);  // 0 - dead, 1 - alive
     if (config != NULL && field != NULL) {
         int count = 0;
-        if (input(field, n, m, &count) == EXIT_SUCCESS) {
+        if (input(config, field, n, m, &count) == EXIT_SUCCESS) {
+            fclose(config);
             init_window();
-            while (count >= 0 && exit_status == EXIT_SUCCESS) {
-                if (update(field, n, m, &count) == EXIT_FAILURE) exit_status = EXIT_FAILURE;
+            int delay = 100000;
+            while (count > 0 && exit_status == EXIT_SUCCESS) {
+                if (update(field, n, m, &count, &delay) == EXIT_FAILURE) exit_status = EXIT_FAILURE;
             }
             endwin();
-        }
+        } else
+            fclose(config);
 
         free(field);
-        fclose(config);
     } else {
         if (field) free(field);
         if (config) fclose(config);
@@ -60,7 +62,7 @@ void init_window() {
     stdscr = initscr();
     cbreak();
     noecho();
-    // nodelay(stdscr, TRUE);
+    nodelay(stdscr, TRUE);
     intrflush(stdscr, FALSE);
     keypad(stdscr, TRUE);
 }
@@ -97,11 +99,11 @@ void print_horizontal_border(int w) {
     printw("+\n");
 }
 
-int input(char **field, int n, int m, int *count) {
+int input(FILE *src, char **field, int n, int m, int *count) {
     int exit_status = EXIT_SUCCESS;
     for (int i = 0; i < n && !exit_status; i++) {
         for (int j = 0; j < m && !exit_status; j++) {
-            if (scanf(" %c", field[i] + j) != 1 || !(field[i][j] == '0' || field[i][j] == '1'))
+            if (fscanf(src, " %c", field[i] + j) != 1 || !(field[i][j] == '0' || field[i][j] == '1'))
                 exit_status = EXIT_FAILURE;
             field[i][j] -= '0';
             if (field[i][j]) (*count)++;
@@ -131,16 +133,34 @@ void draw(char **field, int n, int m, int *count, char **next_field) {
         printw("|\n");
     }
     print_horizontal_border(m);
-    refresh();
 }
 
-int update(char **field, int n, int m, int *count) {
+int update(char **field, int n, int m, int *count, int *delay) {
+    static const double step = 1.5;
     int exit_status = EXIT_SUCCESS;
+
     char **next_field = allocate_matrix(n, m);
     if (next_field != NULL) {
         draw(field, n, m, count, next_field);
         memcpy(field + n, next_field + n, n * m * sizeof(char));
-        usleep(500000);
+
+        char c = getch();
+        if (c != ERR) {
+            switch (c) {
+                case '-':
+                    *delay = (int)(*delay * step);
+                    break;
+                case '+':
+                case '=':
+                    *delay = (int)(*delay / step);
+                    break;
+                case 'q':
+                    *count = 0;
+                    break;
+            }
+        }
+
+        usleep(*delay);
         free(next_field);
     } else
         exit_status = EXIT_FAILURE;
