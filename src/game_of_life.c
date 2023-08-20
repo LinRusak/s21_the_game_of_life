@@ -10,15 +10,19 @@
 
 #define TICK 1000
 
-int mod(int divisor, int denominator);
-int check_adjasents(char **matrix, int n, int m, int i, int j);
-
-int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause);
-int input(FILE *src, char **field, int n, int m, int *count_ptr);
+void init_window();
 
 char **allocate_matrix(int n, int m);
 
-void init_window();
+int int_min(int a, int b);
+int int_max(int a, int b);
+int mod(int divisor, int denominator);
+int check_adjasents(char **matrix, int n, int m, int i, int j);
+
+void print_horizontal_border(int w);
+int input(FILE *src, char **field, int n, int m, int *count_ptr);
+void draw(char **field, int n, int m, int *count, char **next_field);
+int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause);
 
 int main(int argc, char **argv) {
     int exit_status = EXIT_SUCCESS;
@@ -193,5 +197,3 @@ int update(char **field, int n, int m, int *count, int *delay, int *wait, char *
 
     return exit_status;
 }
-
-// todo: move all functions declarations to a beginning of the program
