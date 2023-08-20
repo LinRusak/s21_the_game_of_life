@@ -8,6 +8,8 @@
 #define M 80
 #define DEFAULT_CONFIG "../configs/config1.txt"
 
+#define TICK 10000
+
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
 
@@ -85,6 +87,10 @@ char **allocate_matrix(int n, int m) {
 
 // Secondary functions
 
+int int_min(int a, int b) { return (a < b) ? a : b; }
+
+int int_max(int a, int b) { return (a > b) ? a : b; }
+
 int mod(int divisor, int denominator) { return (divisor % denominator + denominator) % denominator; }
 
 int check_adjasents(char **matrix, int n, int m, int i, int j) {
@@ -148,6 +154,7 @@ void draw(char **field, int n, int m, int *count, char **next_field) {
 
 int update(char **field, int n, int m, int *count, int *delay) {
     static const double step = 1.5;
+    static const int max_delay = 500000, min_delay = TICK;
     int exit_status = EXIT_SUCCESS;
 
     char **next_field = allocate_matrix(n, m);
@@ -159,11 +166,11 @@ int update(char **field, int n, int m, int *count, int *delay) {
         if (c != ERR) {
             switch (c) {
                 case '-':
-                    *delay = (int)(*delay * step);
+                    *delay = int_min((int)(*delay * step), max_delay);
                     break;
                 case '+':
                 case '=':
-                    *delay = (int)(*delay / step);
+                    *delay = int_max((int)(*delay / step), min_delay);
                     break;
                 case 'q':
                     *count = 0;
@@ -171,9 +178,12 @@ int update(char **field, int n, int m, int *count, int *delay) {
             }
         }
 
-        usleep(*delay);
         free(next_field);
+        usleep(*delay);
     } else
         exit_status = EXIT_FAILURE;
     return exit_status;
 }
+
+// todo: pause the game
+// todo: move all functions declarations to a beginning of the program
