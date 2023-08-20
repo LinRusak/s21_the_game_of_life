@@ -6,7 +6,7 @@
 
 #define N 25
 #define M 80
-#define DEFAULT_CONFIG "config1.txt"
+#define DEFAULT_CONFIG "../configs/config1.txt"
 
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
@@ -110,9 +110,11 @@ int input(FILE *src, char **field, int n, int m, int *count) {
     int exit_status = EXIT_SUCCESS;
     for (int i = 0; i < n && !exit_status; i++) {
         for (int j = 0; j < m && !exit_status; j++) {
-            if (fscanf(src, " %c", field[i] + j) != 1 || !(field[i][j] == '0' || field[i][j] == '1'))
-                exit_status = EXIT_FAILURE;
-            field[i][j] -= '0';
+            do {
+                if (fscanf(src, "%c", field[i] + j) != 1 || !(strchr("0 |\n", field[i][j])))
+                    exit_status = EXIT_FAILURE;
+            } while (strchr("|\n", field[i][j]) && exit_status == 0);
+            field[i][j] = (field[i][j] == ' ') ? 0 : 1;
             if (field[i][j]) (*count)++;
         }
     }
