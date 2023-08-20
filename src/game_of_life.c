@@ -39,20 +39,27 @@ int main(int argc, char **argv) {
             init_window();
             int delay = 100000;
             while (count > 0 && exit_status == EXIT_SUCCESS) {
-                if (update(field, n, m, &count, &delay) == EXIT_FAILURE) exit_status = EXIT_FAILURE;
+                if (update(field, n, m, &count, &delay) == EXIT_FAILURE) {
+                    perror("Error while screen updating has occured");
+                    exit_status = EXIT_FAILURE;
+                }
             }
             endwin();
-        } else
+        } else {
+            fprintf(stderr, "Incorrect configuration file has passed.\n");
             fclose(config);
+        }
 
         free(field);
     } else {
         if (field) free(field);
-        if (config) fclose(config);
+        if (config) {
+            perror("An error while field allocation has occured");
+            fclose(config);
+        } else
+            perror("An error while opening file has occured");
         exit_status = EXIT_FAILURE;
     }
-
-    if (exit_status != EXIT_SUCCESS) perror("An error has occured");
 
     return exit_status;
 }
