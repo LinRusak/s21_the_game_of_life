@@ -142,6 +142,8 @@ void draw(char **field, int n, int m, int *count, char **next_field) {
         printw("|\n");
     }
     print_horizontal_border(m);
+    printw("+/- increase and decrease game speed\n");
+    printw("q - exit");
 }
 
 int update(char **field, int n, int m, int *count, int *delay) {
