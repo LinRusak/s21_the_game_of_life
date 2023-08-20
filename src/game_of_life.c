@@ -8,12 +8,12 @@
 #define M 80
 #define DEFAULT_CONFIG "../configs/config1.txt"
 
-#define TICK 10000
+#define TICK 1000
 
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
 
-int update(char **field, int n, int m, int *count, int *delay);
+int update(char **field, int n, int m, int *count, int *delay, int *wait);
 int input(FILE *src, char **field, int n, int m, int *count_ptr);
 
 char **allocate_matrix(int n, int m);
@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
         if (input(config, field, n, m, &count) == EXIT_SUCCESS) {
             fclose(config);
             init_window();
-            int delay = 100000;
+            int delay = 100000, wait = 0;
             while (count > 0 && exit_status == EXIT_SUCCESS) {
-                if (update(field, n, m, &count, &delay) == EXIT_FAILURE) {
+                if (update(field, n, m, &count, &delay, &wait) == EXIT_FAILURE) {
                     perror("Error while screen updating has occured");
                     exit_status = EXIT_FAILURE;
                 }
@@ -152,36 +152,41 @@ void draw(char **field, int n, int m, int *count, char **next_field) {
     printw("q - exit");
 }
 
-int update(char **field, int n, int m, int *count, int *delay) {
+int update(char **field, int n, int m, int *count, int *delay, int *wait) {
     static const double step = 1.5;
     static const int max_delay = 500000, min_delay = TICK;
     int exit_status = EXIT_SUCCESS;
 
-    char **next_field = allocate_matrix(n, m);
-    if (next_field != NULL) {
-        draw(field, n, m, count, next_field);
-        memcpy(field + n, next_field + n, n * m * sizeof(char));
+    if (*wait <= 0) {
+        char **next_field = allocate_matrix(n, m);
+        if (next_field != NULL) {
+            draw(field, n, m, count, next_field);
+            memcpy(field + n, next_field + n, n * m * sizeof(char));
+            free(next_field);
+        } else
+            exit_status = EXIT_FAILURE;
+        *wait = *delay / TICK;
+    }
 
-        char c = getch();
-        if (c != ERR) {
-            switch (c) {
-                case '-':
-                    *delay = int_min((int)(*delay * step), max_delay);
-                    break;
-                case '+':
-                case '=':
-                    *delay = int_max((int)(*delay / step), min_delay);
-                    break;
-                case 'q':
-                    *count = 0;
-                    break;
-            }
+    char c = getch();
+    if (c != ERR) {
+        switch (c) {
+            case '-':
+                *delay = int_min((int)(*delay * step), max_delay);
+                break;
+            case '+':
+            case '=':
+                *delay = int_max((int)(*delay / step), min_delay);
+                break;
+            case 'q':
+                *count = 0;
+                break;
         }
+    }
 
-        free(next_field);
-        usleep(*delay);
-    } else
-        exit_status = EXIT_FAILURE;
+    usleep(TICK);
+    (*wait)--;
+
     return exit_status;
 }
 
