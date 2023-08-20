@@ -22,6 +22,7 @@ int check_adjasents(char **matrix, int n, int m, int i, int j);
 void print_horizontal_border(int w);
 int input(FILE *src, char **field, int n, int m, int *count_ptr);
 void draw(char **field, int n, int m, int *count, char **next_field);
+void handle_key_press(int *delay, int *count, char *pause);
 int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause);
 
 int main(int argc, char **argv) {
@@ -158,21 +159,9 @@ void draw(char **field, int n, int m, int *count, char **next_field) {
     printw("q - exit");
 }
 
-int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause) {
+void handle_key_press(int *delay, int *count, char *pause) {
     static const double step = 1.5;
     static const int max_delay = 500000, min_delay = TICK;
-    int exit_status = EXIT_SUCCESS;
-
-    if (*wait <= 0 && !(*pause)) {
-        char **next_field = allocate_matrix(n, m);
-        if (next_field != NULL) {
-            draw(field, n, m, count, next_field);
-            memcpy(field + n, next_field + n, n * m * sizeof(char));
-            free(next_field);
-        } else
-            exit_status = EXIT_FAILURE;
-        *wait = *delay / TICK;
-    }
 
     char c = getch();
     if (c != ERR) {
@@ -192,6 +181,23 @@ int update(char **field, int n, int m, int *count, int *delay, int *wait, char *
                 break;
         }
     }
+}
+
+int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause) {
+    int exit_status = EXIT_SUCCESS;
+
+    if (*wait <= 0 && !(*pause)) {
+        char **next_field = allocate_matrix(n, m);
+        if (next_field != NULL) {
+            draw(field, n, m, count, next_field);
+            memcpy(field + n, next_field + n, n * m * sizeof(char));
+            free(next_field);
+        } else
+            exit_status = EXIT_FAILURE;
+        *wait = *delay / TICK;
+    }
+
+    handle_key_press(delay, count, pause);
 
     usleep(TICK);
     (*wait)--;
