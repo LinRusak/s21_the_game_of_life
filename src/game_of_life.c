@@ -6,7 +6,7 @@
 
 #define N 25
 #define M 80
-#define DEFAULT_CONFIG "config1.txt"
+#define DEFAULT_CONFIG "../configs/config1.txt"
 
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
