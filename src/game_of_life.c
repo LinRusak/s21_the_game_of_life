@@ -13,7 +13,7 @@
 int mod(int divisor, int denominator);
 int check_adjasents(char **matrix, int n, int m, int i, int j);
 
-int update(char **field, int n, int m, int *count, int *delay, int *wait);
+int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause);
 int input(FILE *src, char **field, int n, int m, int *count_ptr);
 
 char **allocate_matrix(int n, int m);
@@ -40,8 +40,9 @@ int main(int argc, char **argv) {
             fclose(config);
             init_window();
             int delay = 100000, wait = 0;
+            char pause = 0;
             while (count > 0 && exit_status == EXIT_SUCCESS) {
-                if (update(field, n, m, &count, &delay, &wait) == EXIT_FAILURE) {
+                if (update(field, n, m, &count, &delay, &wait, &pause) == EXIT_FAILURE) {
                     perror("Error while screen updating has occured");
                     exit_status = EXIT_FAILURE;
                 }
@@ -152,12 +153,12 @@ void draw(char **field, int n, int m, int *count, char **next_field) {
     printw("q - exit");
 }
 
-int update(char **field, int n, int m, int *count, int *delay, int *wait) {
+int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause) {
     static const double step = 1.5;
     static const int max_delay = 500000, min_delay = TICK;
     int exit_status = EXIT_SUCCESS;
 
-    if (*wait <= 0) {
+    if (*wait <= 0 && !(*pause)) {
         char **next_field = allocate_matrix(n, m);
         if (next_field != NULL) {
             draw(field, n, m, count, next_field);
@@ -181,6 +182,9 @@ int update(char **field, int n, int m, int *count, int *delay, int *wait) {
             case 'q':
                 *count = 0;
                 break;
+            case 'p':
+                *pause = !(*pause);
+                break;
         }
     }
 
@@ -190,5 +194,4 @@ int update(char **field, int n, int m, int *count, int *delay, int *wait) {
     return exit_status;
 }
 
-// todo: pause the game
 // todo: move all functions declarations to a beginning of the program
