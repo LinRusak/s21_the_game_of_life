@@ -25,24 +25,17 @@ void draw(char **field, int n, int m, int *count, char **next_field);
 void handle_key_press(int *delay, int *count, char *pause);
 int update(char **field, int n, int m, int *count, int *delay, int *wait, char *pause);
 
-int main(int argc, char **argv) {
+int main(void) {
     int exit_status = EXIT_SUCCESS;
-
-    FILE *config;
-    if (argc <= 1) {
-        printf("Configuration file is not passed.\nTaking a default configuration...\n");
-        config = fopen(DEFAULT_CONFIG, "r");
-    } else {
-        printf("Configuration file '%s' is passed.\n", argv[1]);
-        config = fopen(argv[1], "r");
-    }
 
     int n = N, m = M;
     char **field = allocate_matrix(n, m);  // 0 - dead, 1 - alive
-    if (config != NULL && field != NULL) {
+    if (field != NULL) {
         int count = 0;
-        if (input(config, field, n, m, &count) == EXIT_SUCCESS) {
-            fclose(config);
+        FILE *check = NULL;
+        int input_status = EXIT_FAILURE;
+        if ((input_status = input(stdin, field, n, m, &count)) == EXIT_SUCCESS &&
+            (check = freopen("/dev/tty", "r", stdin))) {
             init_window();
             int delay = 100000, wait = 0;
             char pause = 0;
@@ -54,18 +47,16 @@ int main(int argc, char **argv) {
             }
             endwin();
         } else {
-            fprintf(stderr, "Incorrect configuration file has passed.\n");
-            fclose(config);
+            if (input_status == EXIT_FAILURE)
+                fprintf(stderr, "Incorrect configuration has entered.\n");
+            else if (check == NULL)
+                perror("An error while opening stdin occured");
+            exit_status = EXIT_FAILURE;
         }
 
         free(field);
     } else {
-        if (field) free(field);
-        if (config) {
-            perror("An error while field allocation has occured");
-            fclose(config);
-        } else
-            perror("An error while opening file has occured");
+        perror("An error while field allocation has occured");
         exit_status = EXIT_FAILURE;
     }
 
